@@ -1,0 +1,122 @@
+---
+title: "Regression Model Course Project"
+author: "Nur Seto Dimas"
+date: "12 October 2019"
+output: 
+  word_document: 
+    highlight: haddock
+    keep_md: yes
+---
+
+# **Executive Summary**  
+
+This project will performs analysis towards mtcars dataset, especially exploring the relationship between variables and miles per gallon (MPG) outcome. In particularly the analysis will try to answer these following questions:
+
+1. “Is an automatic or manual transmission better for MPG”
+2. "Quantifying the MPG difference between automatic and manual transmissions"   
+
+# **Exploratory Data Analysis**  
+
+## **Data Description**
+The dataset used for analysis is mtcars data set. The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+The data set consists of 32 observations on 11 (numeric) variables.
+
+- **mpg**:	 Miles/(US) gallon
+- **cyl**:	 Number of cylinders
+- **disp**:	 Displacement (cu.in.)
+- **hp**:	 Gross horsepower
+- **drat**:	 Rear axle ratio
+- **wt**:	 Weight (lb/1000)
+- **qsec**:	 1/4 mile time
+- **vs**:	 V/S
+- **am**:	 Transmission (0 = automatic, 1 = manual)
+- **gear**:	 Number of forward gears
+- **carb**:	 Number of carburetors
+
+## **Data preparation and transformation**
+```{r Preparation, echo=TRUE, message=FALSE, warning=FALSE}
+library(tidyverse)
+glimpse(mtcars)
+
+# Transform into factor
+mtcars$cyl  <- factor(mtcars$cyl)
+mtcars$vs   <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am   <- factor(mtcars$am,labels=c("Automatic","Manual"))
+```
+
+In appendix 1, the plot shows correlation between variables and a strong relation can be observed between mpg and variables like cyl, disp, hp, drat, wt, vs and am. As the focus of the analysis is to observe the effect of car transmission type on mpg, the relation between two variables also explained in boxplot on appendix 2. 
+
+## **Statistical Inference**  
+```{r Summary mean mpg vs am, echo=FALSE, message=FALSE, warning=FALSE}
+aggregate(mpg ~ am, mtcars, mean)
+```
+It can be seen that manual yields more mpg than automatic, aproximately **7.2** more miles. To test wether the difference is significant or not, t-test will be performed.
+
+```{r T-test mpg vs am, echo=FALSE, message=FALSE, warning=FALSE}
+tt_am <- t.test(mpg ~ am, mtcars)
+tt_am$p.value
+```
+The t-test gives p-value of **0.001374** which shows that there is significant difference between automatic and manual transmission means.
+
+# **Regression Analysis**
+
+```{r Mpg vs am model, echo=FALSE, message=FALSE, warning=FALSE}
+fit <- lm(mpg ~ am, mtcars)
+summary(fit)
+```
+
+This model shows that mpg for automatic is **17.147** and manual is ** 7.245** higher. The Adjuted R-squared of 0.3385 implied that only 33.85% of the variance is explained by am that affect the mpg this regression model.
+
+```{r Multiple linear model, echo=TRUE, message=FALSE, warning=FALSE}
+fitall <- lm(mpg ~ . , mtcars)
+bestfit <- step(fitall, direction = "both", trace = 0)
+summary(bestfit)
+```
+The stepwise regression is performed with mpg and all the other dependent variables. The result shows Adjusted R-squared values of 0.8401, increased from the previous model.
+
+
+# **Residual Analysis**
+```{r Residual, echo=TRUE}
+par(mfrow = c(2,2))
+plot(bestfit)
+```
+1. **Residuals vs Fitted**
+Residuals spreads around a horizontal line without distinct pattern, this shows the model don't have non-linear relationships.
+2. **Normal Q-Q**
+Most of the residuals follow straight line or it can be said the residuals are normally distributed with the exception of few outliers.
+3. **Scale-Location**
+The residuals appear randomly spread along the horizontal line. This shows constant variances in the residuals errors (homoscedasticity).
+4. **Residuals vs Leverage**
+There is no  influential cases in the model. The Cook's distance lines are barely seen in the plot. Even though there is observable extreme values, those values appear not to be influential to determine the regression line or it can be said that there is no need to remove the outliers.
+
+# **Conclusion**
+**Is an automatic or manual transmission better for MPG?**
+The analysis performed shows that manual transmission in better in term of mpg when compared with automatic. However, as other variables included in the regression model, the difference appear less significant.
+
+**Quantify the MPG difference between automatic and manual transmissions**
+With inital regression model, manual transmissions have **7.245** higher mpg than automatic. When other variables (cyl, hp, adn wt) included the difference become lesser, manual transmission only **1.809** higher than automatic.
+
+# ** Appendix**  
+## ** Appendix 1**  
+```{r Appendix 1 Correlation plot, echo=TRUE, message=FALSE, warning=FALSE}
+pairs(mpg ~ . , mtcars)
+```
+
+## **Appendix 2**
+```{r Appendix 2 Boxplot mpg vs am, echo=TRUE, message=FALSE, warning=FALSE}
+boxplot(mpg ~ am, mtcars, xlab = "Transmission Type", ylab = "Miles per Gallon", main = "MPG vs Transmission Type")
+```
+
+## **Appendix 3**
+```{r T test mpg vs am, echo=TRUE, message=FALSE, warning=FALSE}
+tt_am
+```
+
+## **Appendix 4**
+```{r Stepwise regression, echo=TRUE}
+step(fitall, direction = "both")
+```
+
